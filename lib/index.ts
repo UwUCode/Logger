@@ -105,8 +105,3 @@ export default class Logger {
         return this._log.child({ name });
     }
 }
-
-Logger.getLogger("test").info("test");
-Logger.getLogger("test").debug("test");
-Logger.getLogger("test").error("test");
-Logger.getLogger("test").warn("test");
