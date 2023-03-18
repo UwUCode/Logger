@@ -56,7 +56,14 @@ export default class Logger {
     private static _getFormat(colors = true) {
         return format.combine(
             format.splat(),
-            format.printf(({ level, message, name }) => (colors ? this._colors[level] ?? noop : noop)?.(`${this._getTimestamp()} [${level.toUpperCase()}]${typeof name === "string" ? `[${name}]` : ""} ${String(message)}`))
+            format.errors({ stack: true }),
+            format.printf(({ level, message, name, stack }) => {
+                if (stack){
+                    message = String(stack).split("\n")[0].split(":")[1].trim() === message ? String(stack) : `${String(message)}\n${String(stack)}`;
+                }
+
+                return (colors ? this._colors[level] ?? noop : noop)?.(`${this._getTimestamp()} [${level.toUpperCase()}]${Array.isArray(name) ? name.map(val => `[${String(val)}]`).join(",") : ""} ${String(message)}`);
+            })
         );
     }
 
@@ -101,7 +108,7 @@ export default class Logger {
         return this;
     }
 
-    static getLogger(name: string) {
-        return this._log.child({ name });
+    static getLogger(name: string, ...names: Array<string>) {
+        return this._log.child({ name: [name, ...names] });
     }
 }
