@@ -68,6 +68,22 @@ export default class Logger {
         });
     }
 
+    static get debug() {
+        return this._log.debug;
+    }
+
+    static get error() {
+        return this._log.error;
+    }
+
+    static get info() {
+        return this._log.info;
+    }
+
+    static get warn() {
+        return this._log.warn;
+    }
+
     static _addTransport(transport: transport) {
         this._log.add(transport);
         return this;
@@ -103,3 +119,5 @@ export default class Logger {
         return this._log.child({ name });
     }
 }
+
+Logger.getLogger("test").info("Hello", "world!");
