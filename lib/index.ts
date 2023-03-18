@@ -6,44 +6,19 @@ import {
     type transport
 } from "winston";
 import "winston-daily-rotate-file";
-
-export enum RawColors {
-    Reset = "\u001B[0m",
-    Bright = "\u001B[1m",
-    Dim = "\u001B[2m",
-    Underscore = "\u001B[4m",
-    Blink = "\u001B[5m",
-    Reverse = "\u001B[7m",
-    Hidden = "\u001B[8m",
-
-    FgBlack = "\u001B[30m",
-    FgRed = "\u001B[31m",
-    FgGreen = "\u001B[32m",
-    FgYellow = "\u001B[33m",
-    FgBlue = "\u001B[34m",
-    FgMagenta = "\u001B[35m",
-    FgCyan = "\u001B[36m",
-    FgWhite = "\u001B[37m",
-
-    BgBlack = "\u001B[40m",
-    BgRed = "\u001B[41m",
-    BgGreen = "\u001B[42m",
-    BgYellow = "\u001B[43m",
-    BgBlue = "\u001B[44m",
-    BgMagenta = "\u001B[45m",
-    BgCyan = "\u001B[46m",
-    BgWhite = "\u001B[47m",
-}
+// eslint-disable-next-line unicorn/import-style
+import chalk, { type ChalkInstance } from "chalk";
 
 const DefaultColors = {
-    error: RawColors.FgRed,
-    warn:  RawColors.FgYellow,
-    info:  RawColors.FgGreen,
-    debug: RawColors.FgCyan
+    error: chalk.redBright,
+    warn:  chalk.yellowBright,
+    info:  chalk.greenBright,
+    debug: chalk.cyanBright
 };
+const noop = (str: string) => str;
 
 export default class Logger {
-    private static _colors: Record<string, string> = DefaultColors;
+    private static _colors: Record<string, ChalkInstance> = DefaultColors;
     private static _log: ILogger;
     static {
         this._log = createLogger({
@@ -81,7 +56,7 @@ export default class Logger {
     private static _getFormat(colors = true) {
         return format.combine(
             format.splat(),
-            format.printf(({ level, message, name }) => `${colors ? (this._colors[level as "debug"] || "") : ""}${this._getTimestamp()} [${level.toUpperCase()}]${typeof name === "string" ? `[${name}]` : ""} ${String(message)}${colors ? RawColors.Reset : ""}`)
+            format.printf(({ level, message, name }) => (colors ? this._colors[level] ?? noop : noop)?.(`${this._getTimestamp()} [${level.toUpperCase()}]${typeof name === "string" ? `[${name}]` : ""} ${String(message)}`))
         );
     }
 
@@ -116,7 +91,7 @@ export default class Logger {
         }));
     }
 
-    static _setColors(colors: Record<string, string>) {
+    static _setColors(colors: Record<string, ChalkInstance>) {
         this._colors = colors;
         return this;
     }
@@ -131,4 +106,7 @@ export default class Logger {
     }
 }
 
-Logger.getLogger("test").info("Hello", "world!");
+Logger.getLogger("test").info("test");
+Logger.getLogger("test").debug("test");
+Logger.getLogger("test").error("test");
+Logger.getLogger("test").warn("test");
