@@ -54,34 +54,40 @@ export default class Logger {
                 info:  2,
                 debug: 3
             },
-            format: format.combine(
-                format.timestamp({ format() {
-                    const d = new Date();
-                    return `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}/${d.getFullYear()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}.${d.getMilliseconds().toString().padStart(3, "0")}`;
-                } }),
-                format.splat(),
-                format.printf(({ level, message, timestamp, name }) => `${this._colors[level as "debug"] || ""}${String(timestamp || new Date().toISOString())} [${level.toUpperCase()}]${typeof name === "string" ? `[${name}]` : ""} ${String(message)}${RawColors.Reset}`)
-            ),
             transports: [
-                new transports.Console({ debugStdout: true })
+                new transports.Console({
+                    format: this._getFormat()
+                })
             ]
         });
     }
 
     static get debug() {
-        return this._log.debug;
+        return this._log.debug.bind(this._log);
     }
 
     static get error() {
-        return this._log.error;
+        return this._log.error.bind(this._log);
     }
 
     static get info() {
-        return this._log.info;
+        return this._log.info.bind(this._log);
     }
 
     static get warn() {
-        return this._log.warn;
+        return this._log.warn.bind(this._log);
+    }
+
+    private static _getFormat(colors = true) {
+        return format.combine(
+            format.splat(),
+            format.printf(({ level, message, name }) => `${colors ? (this._colors[level as "debug"] || "") : ""}${this._getTimestamp()} [${level.toUpperCase()}]${typeof name === "string" ? `[${name}]` : ""} ${String(message)}${colors ? RawColors.Reset : ""}`)
+        );
+    }
+
+    private static _getTimestamp() {
+        const d = new Date();
+        return `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}/${d.getFullYear()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}.${d.getMilliseconds().toString().padStart(3, "0")}`;
     }
 
     static _addTransport(transport: transport) {
@@ -94,14 +100,19 @@ export default class Logger {
     }
 
     static _saveToFile(file: string) {
-        return this._addTransport(new transports.File({ filename: file }));
+        return this._addTransport(new transports.File({
+            filename: file,
+            format:   this._getFormat(false)
+        }));
     }
 
     static _saveToRotatingFile(directory: string) {
         return this._addTransport(new transports.DailyRotateFile({
-            dirname:     directory,
-            filename:    "%DATE%.log",
-            datePattern: "MM-DD-YYYY"
+            dirname:       directory,
+            filename:      "%DATE%.log",
+            datePattern:   "MM-DD-YYYY",
+            createSymlink: true,
+            format:        this._getFormat(false)
         }));
     }
 
